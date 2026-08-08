@@ -70,12 +70,24 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payment status" }, { status: 400 });
   }
 
+  const supabase = getServerSupabase();
+
+  const { data: current, error: currentError } = await supabase
+    .from("bookings")
+    .select("id, booking_status, payment_status")
+    .eq("id", body.bookingId)
+    .single();
+
+  if (currentError) return NextResponse.json({ error: currentError.message }, { status: 500 });
+
+  const nextBookingStatus = bookingStatus || current.booking_status;
+  const nextPaymentStatus = paymentStatus || current.payment_status;
+
   const updates: Record<string, string> = {};
   if (bookingStatus) updates.booking_status = bookingStatus;
   if (paymentStatus) updates.payment_status = paymentStatus;
   if (!Object.keys(updates).length) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
-  const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from("bookings")
     .update(updates)
@@ -85,12 +97,23 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if (bookingStatus) {
-    const { error: slotError } = await supabase
-      .from("booking_slots")
-      .update({ status: bookingStatus })
-      .eq("booking_id", body.bookingId);
-    if (slotError) return NextResponse.json({ error: slotError.message }, { status: 500 });
+  let slotStatus = "pending";
+  if (nextBookingStatus === "cancelled") slotStatus = "cancelled";
+  else if (nextBookingStatus === "completed") slotStatus = "completed";
+  else if (nextBookingStatus === "confirmed" && nextPaymentStatus === "paid") slotStatus = "confirmed";
+
+  const { error: slotError } = await supabase
+    .from("booking_slots")
+    .update({ status: slotStatus })
+    .eq("booking_id", body.bookingId);
+
+  if (slotError) {
+    const conflict = slotError.code === "23505";
+    return NextResponse.json({
+      error: conflict
+        ? "This court/time slot is already booked by another confirmed and paid reservation."
+        : slotError.message
+    }, { status: conflict ? 409 : 500 });
   }
 
   return NextResponse.json({ booking: data });
