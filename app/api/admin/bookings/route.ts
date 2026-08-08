@@ -39,7 +39,19 @@ export async function GET(req: NextRequest) {
     .limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ bookings: data || [] });
+
+  const bookings = await Promise.all((data || []).map(async (booking) => {
+    let proof_url: string | null = null;
+    if (booking.proof_path) {
+      const { data: signed } = await supabase.storage
+        .from("payment-proofs")
+        .createSignedUrl(booking.proof_path, 60 * 60);
+      proof_url = signed?.signedUrl || null;
+    }
+    return { ...booking, proof_url };
+  }));
+
+  return NextResponse.json({ bookings });
 }
 
 export async function PATCH(req: NextRequest) {
