@@ -23,6 +23,7 @@ type Booking = {
   payment_status: string;
   booking_status: string;
   proof_path?: string | null;
+  proof_url?: string | null;
   created_at: string;
   booking_slots?: Slot[];
 };
@@ -38,6 +39,7 @@ export default function AdminPage() {
   const [code, setCode] = useState("");
   const [courts, setCourts] = useState<Court[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -82,13 +84,18 @@ export default function AdminPage() {
     await loadBookings();
   }
 
+  const filteredBookings = useMemo(() => {
+    if (!selectedDate) return bookings;
+    return bookings.filter(b => (b.booking_slots || []).some(s => s.booking_date === selectedDate));
+  }, [bookings, selectedDate]);
+
   const stats = useMemo(() => ({
-    total: bookings.length,
-    pending: bookings.filter(b => b.booking_status === "pending").length,
-    confirmed: bookings.filter(b => b.booking_status === "confirmed").length,
-    paid: bookings.filter(b => b.payment_status === "paid").length,
-    revenue: bookings.filter(b => b.payment_status === "paid").reduce((sum, b) => sum + Number(b.total_amount || 0), 0)
-  }), [bookings]);
+    total: filteredBookings.length,
+    pending: filteredBookings.filter(b => b.booking_status === "pending").length,
+    confirmed: filteredBookings.filter(b => b.booking_status === "confirmed").length,
+    paid: filteredBookings.filter(b => b.payment_status === "paid").length,
+    revenue: filteredBookings.filter(b => b.payment_status === "paid").reduce((sum, b) => sum + Number(b.total_amount || 0), 0)
+  }), [filteredBookings]);
 
   return (
     <main className="container">
@@ -97,15 +104,15 @@ export default function AdminPage() {
         <div>
           <span className="pill">ADMIN DASHBOARD</span>
           <h1>Booking Management</h1>
-          <p>Review reservations, verify payments, confirm bookings, and change court rates.</p>
+          <p>Review reservations, verify payments, confirm bookings, filter by booking date, and change court rates.</p>
         </div>
       </section>
 
       <section className="card">
         <div className="grid grid-2">
           <div>
-            <label>Admin access code</label>
-            <input type="password" value={code} onChange={e => setCode(e.target.value)} placeholder="Enter ADMIN_ACCESS_CODE" />
+            <label>Admin password</label>
+            <input type="password" value={code} onChange={e => setCode(e.target.value)} placeholder="Enter ADMIN_PASSWORD" />
           </div>
           <div style={{ display: "flex", alignItems: "end" }}>
             <button className="btn btn-primary" onClick={loadBookings} disabled={loading || !code}>
@@ -117,6 +124,20 @@ export default function AdminPage() {
 
       {bookings.length > 0 && (
         <>
+          <section className="card" style={{ marginTop: 16 }}>
+            <div className="grid grid-2">
+              <div>
+                <label>Filter by booking date</label>
+                <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+              </div>
+              <div style={{ display: "flex", alignItems: "end", gap: 10 }}>
+                <button className="btn btn-secondary" onClick={() => setSelectedDate("")}>Show All Dates</button>
+                <button className="btn btn-secondary" onClick={loadBookings}>Refresh</button>
+              </div>
+            </div>
+            {selectedDate && <p className="muted" style={{ marginBottom: 0 }}>Showing bookings that contain a slot on <strong>{selectedDate}</strong>.</p>}
+          </section>
+
           <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", marginTop: 16 }}>
             <section className="card"><div className="muted">Bookings</div><div className="price">{stats.total}</div></section>
             <section className="card"><div className="muted">Pending</div><div className="price">{stats.pending}</div></section>
@@ -126,49 +147,65 @@ export default function AdminPage() {
           </div>
 
           <section className="card" style={{ marginTop: 16 }}>
-            <div className="row space"><h2>Recent Bookings</h2><button className="btn btn-secondary" onClick={loadBookings}>Refresh</button></div>
-            <div className="grid">
-              {bookings.map(b => (
-                <article key={b.id} style={{ border: "1px solid #285363", borderRadius: 14, padding: 16, background: "#09191f" }}>
-                  <div className="row space">
-                    <div>
-                      <strong>{b.customer_name}</strong>
-                      <div className="muted">{b.booking_code} · {b.customer_mobile} · {b.customer_email}</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}><strong>₱{Number(b.total_amount).toLocaleString()}</strong><div className="muted">{b.total_hours} hour(s)</div></div>
-                  </div>
-
-                  <div style={{ marginTop: 12 }}>
-                    {(b.booking_slots || []).map(s => (
-                      <div key={s.id} className="muted" style={{ marginBottom: 4 }}>
-                        {s.booking_date} · {s.courts?.name || "Court"} · {formatTime(s.start_minute)} - {formatTime(s.end_minute)}
+            <div className="row space"><h2>{selectedDate ? `Bookings on ${selectedDate}` : "Recent Bookings"}</h2><span className="pill">{filteredBookings.length} RESULT(S)</span></div>
+            {filteredBookings.length === 0 ? (
+              <p className="muted">No bookings found for the selected date.</p>
+            ) : (
+              <div className="grid">
+                {filteredBookings.map(b => (
+                  <article key={b.id} style={{ border: "1px solid #285363", borderRadius: 14, padding: 16, background: "#09191f" }}>
+                    <div className="row space">
+                      <div>
+                        <strong>{b.customer_name}</strong>
+                        <div className="muted">{b.booking_code} · {b.customer_mobile} · {b.customer_email}</div>
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ textAlign: "right" }}><strong>₱{Number(b.total_amount).toLocaleString()}</strong><div className="muted">{b.total_hours} hour(s)</div></div>
+                    </div>
 
-                  <div className="grid grid-2" style={{ marginTop: 14 }}>
-                    <div>
-                      <label>Booking status</label>
-                      <select value={b.booking_status} onChange={e => updateBooking(b.id, { bookingStatus: e.target.value })}>
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="completed">Completed</option>
-                      </select>
+                    <div style={{ marginTop: 12 }}>
+                      {(b.booking_slots || []).filter(s => !selectedDate || s.booking_date === selectedDate).map(s => (
+                        <div key={s.id} className="muted" style={{ marginBottom: 4 }}>
+                          {s.booking_date} · {s.courts?.name || "Court"} · {formatTime(s.start_minute)} - {formatTime(s.end_minute)}
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <label>Payment status</label>
-                      <select value={b.payment_status} onChange={e => updateBooking(b.id, { paymentStatus: e.target.value })}>
-                        <option value="unpaid">Unpaid</option>
-                        <option value="pending_verification">Pending Verification</option>
-                        <option value="paid">Paid</option>
-                        <option value="refunded">Refunded</option>
-                      </select>
+
+                    <div style={{ marginTop: 14 }}>
+                      <label>Proof of payment attachment</label>
+                      {b.proof_url ? (
+                        <div className="row" style={{ alignItems: "flex-start" }}>
+                          <a className="btn btn-secondary" href={b.proof_url} target="_blank" rel="noreferrer">Open Attachment</a>
+                          <img src={b.proof_url} alt={`Proof of payment for ${b.booking_code}`} style={{ width: 120, maxHeight: 120, objectFit: "cover", borderRadius: 10, border: "1px solid #285363" }} />
+                        </div>
+                      ) : (
+                        <div className="muted">No attachment uploaded.</div>
+                      )}
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+
+                    <div className="grid grid-2" style={{ marginTop: 14 }}>
+                      <div>
+                        <label>Booking status</label>
+                        <select value={b.booking_status} onChange={e => updateBooking(b.id, { bookingStatus: e.target.value })}>
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="cancelled">Cancelled</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Payment status</label>
+                        <select value={b.payment_status} onChange={e => updateBooking(b.id, { paymentStatus: e.target.value })}>
+                          <option value="unpaid">Unpaid</option>
+                          <option value="pending_verification">Pending Verification</option>
+                          <option value="paid">Paid</option>
+                          <option value="refunded">Refunded</option>
+                        </select>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         </>
       )}
