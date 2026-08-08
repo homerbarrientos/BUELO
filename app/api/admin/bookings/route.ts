@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase-server";
 
 function authorized(code: string | null) {
-  return Boolean(code) && code === process.env.ADMIN_ACCESS_CODE;
+  const expected = process.env.ADMIN_PASSWORD || process.env.ADMIN_ACCESS_CODE;
+  return Boolean(code) && Boolean(expected) && code === expected;
 }
 
 export async function GET(req: NextRequest) {
@@ -73,10 +74,9 @@ export async function PATCH(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (bookingStatus) {
-    const slotStatus = bookingStatus;
     const { error: slotError } = await supabase
       .from("booking_slots")
-      .update({ status: slotStatus })
+      .update({ status: bookingStatus })
       .eq("booking_id", body.bookingId);
     if (slotError) return NextResponse.json({ error: slotError.message }, { status: 500 });
   }
