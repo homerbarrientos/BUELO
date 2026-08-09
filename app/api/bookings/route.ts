@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         start_minute: startMinute,
         end_minute: (startMinute + 60) % 1440,
         hourly_rate: Number(court.hourly_rate),
-        status: "pending"
+        status: "confirmed"
       });
     }
   }
@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
     proof_path: proofPath,
     total_hours: slots.length,
     total_amount: totalAmount,
-    payment_status: "pending_verification",
-    booking_status: "pending"
+    payment_status: "paid",
+    booking_status: "confirmed"
   }).select("id").single();
 
   if (bookingError) return NextResponse.json({ error: bookingError.message }, { status: 500 });
@@ -75,5 +75,5 @@ export async function POST(req: NextRequest) {
     }, { status: conflict ? 409 : 500 });
   }
 
-  return NextResponse.json({ bookingCode, totalAmount });
+  return NextResponse.json({ bookingCode, totalAmount, bookingStatus: "confirmed", paymentStatus: "paid" });
 }
