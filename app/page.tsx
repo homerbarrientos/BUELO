@@ -4,6 +4,7 @@ export default function HomePage() {
   return (
     <main className="container">
       <section className="hero">
+
         <div className="heroLogo">
           <img
             src="/buelo-logo.webp"
@@ -13,7 +14,9 @@ export default function HomePage() {
         </div>
 
         <div className="heroContent">
-          <span className="pill">LIVE PICKLEBALL COURT BOOKING</span>
+          <span className="pill">
+            LIVE PICKLEBALL COURT BOOKING
+          </span>
 
           <h1>BUELO Pickleball Court Booking</h1>
 
@@ -23,6 +26,7 @@ export default function HomePage() {
             before submitting.
           </p>
         </div>
+
       </section>
 
       <BookingApp />
