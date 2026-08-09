@@ -5,7 +5,10 @@ export default function AdminLayout({children}:{children:React.ReactNode}){
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(7,18,37,.96)",borderBottom:"1px solid #244d87",backdropFilter:"blur(10px)"}}>
       <div className="container" style={{paddingTop:12,paddingBottom:12}}>
         <div className="row space">
-          <strong>BUELO Admin</strong>
+          <div className="row" style={{gap:10}}>
+            <img src="/buelo-icon.webp" alt="BUELO" style={{width:40,height:40,borderRadius:"50%",objectFit:"cover",display:"block"}} />
+            <strong style={{fontSize:16}}>BUELO Admin</strong>
+          </div>
           <nav className="row">
             <Link className="btn btn-secondary" href="/admin">Dashboard & Reports</Link>
             <Link className="btn btn-secondary" href="/admin/manage">Reservations & Operations</Link>
