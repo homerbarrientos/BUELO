@@ -4,19 +4,27 @@ export default function HomePage() {
   return (
     <main className="container">
       <section className="hero">
-        <div style={{width:270,maxWidth:"42vw",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div className="heroLogo">
           <img
             src="/buelo-logo.webp"
             alt="BUELO Pickleball"
-            style={{width:"100%",height:"auto",display:"block",borderRadius:18}}
+            className="heroLogoImage"
           />
         </div>
-        <div>
+
+        <div className="heroContent">
           <span className="pill">LIVE PICKLEBALL COURT BOOKING</span>
+
           <h1>BUELO Pickleball Court Booking</h1>
-          <p>Select one or more booking dates, choose UNO or DOS court, pick available hourly slots, and see your total instantly before submitting.</p>
+
+          <p>
+            Select one or more booking dates, choose UNO or DOS court,
+            pick available hourly slots, and see your total instantly
+            before submitting.
+          </p>
         </div>
       </section>
+
       <BookingApp />
     </main>
   );
