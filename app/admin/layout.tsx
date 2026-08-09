@@ -9,6 +9,7 @@ export default function AdminLayout({children}:{children:React.ReactNode}){
           <nav className="row">
             <Link className="btn btn-secondary" href="/admin">Dashboard & Reports</Link>
             <Link className="btn btn-secondary" href="/admin/manage">Reservations & Operations</Link>
+            <Link className="btn btn-secondary" href="/admin/maintenance">Maintenance</Link>
             <Link className="btn btn-secondary" href="/">Customer Booking</Link>
           </nav>
         </div>
