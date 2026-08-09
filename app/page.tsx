@@ -4,7 +4,13 @@ export default function HomePage() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="logoBox">BUELO</div>
+        <div style={{width:270,maxWidth:"42vw",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <img
+            src="/buelo-logo.webp"
+            alt="BUELO Pickleball"
+            style={{width:"100%",height:"auto",display:"block",borderRadius:18}}
+          />
+        </div>
         <div>
           <span className="pill">LIVE PICKLEBALL COURT BOOKING</span>
           <h1>BUELO Pickleball Court Booking</h1>
