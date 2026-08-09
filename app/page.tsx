@@ -7,7 +7,7 @@ export default function HomePage() {
 
         <div className="heroLogo">
           <img
-            src="/buelo-logo.webp"
+            src="/buelo-logo.jpg"
             alt="BUELO Pickleball"
             className="heroLogoImage"
           />
