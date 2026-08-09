@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { TIME_SLOTS } from "@/lib/time-slots";
 
 type Court = { id: string; name: string; hourly_rate: number; is_active: boolean };
 type Schedule = { id: string; date: string; courtId: string; selected: number[]; unavailable: number[] };
 
+const MAYA_QR_PAYLOAD = "00020101021127780012com.p2pqrpay0111PAPHPHM1XXX02089996440304126396700177220515+63-967-00177225204601653036085802PH5920DEBIE MAE ANDAG UNOS6013Cotabato City63043909";
 const uid = () => Math.random().toString(36).slice(2);
 const emptySchedule = (): Schedule => ({ id: uid(), date: "", courtId: "", selected: [], unavailable: [] });
 
@@ -13,6 +15,18 @@ function addDays(date: string, days: number) {
   const d = new Date(`${date}T12:00:00`);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+function validName(value: string) {
+  return /^[\p{L}][\p{L}\p{M} .'-]{1,79}$/u.test(value.trim());
+}
+
+function normalizeMobile(value: string) {
+  return value.replace(/[\s()-]/g, "");
+}
+
+function validPhilippineMobile(value: string) {
+  return /^(?:\+63|63|0)9\d{9}$/.test(normalizeMobile(value));
 }
 
 export default function BookingApp() {
@@ -90,45 +104,59 @@ export default function BookingApp() {
     }));
 
     setSchedules(prev => [...prev, ...additions]);
-    for (const item of additions) {
-      await availability(item);
-    }
+    for (const item of additions) await availability(item);
   }
 
   async function submit() {
     setMessage("");
-    if (!customer.name || !customer.mobile || !customer.email) return setMessage("Please complete your contact details.");
+
+    if (!validName(customer.name)) {
+      return setMessage("Please enter a valid full name using letters, spaces, apostrophes, periods, or hyphens only.");
+    }
+    if (!validPhilippineMobile(customer.mobile)) {
+      return setMessage("Please enter a valid Philippine mobile number, e.g. 09171234567 or +639171234567.");
+    }
+    if (!proof) {
+      return setMessage("Please attach your proof of MAYA payment before submitting.");
+    }
+    if (proof.size > 5 * 1024 * 1024) {
+      return setMessage("Proof of payment must be 5 MB or smaller.");
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(proof.type)) {
+      return setMessage("Proof of payment must be a JPG, PNG, or WEBP image.");
+    }
     if (schedules.some(s => !s.date || !s.courtId || s.selected.length === 0)) {
       return setMessage("Each schedule needs a date, court, and at least one time slot.");
     }
 
     setSubmitting(true);
     try {
-      let proofPath = "";
-      if (proof) {
-        const fd = new FormData();
-        fd.append("file", proof);
-        const up = await fetch("/api/upload-proof", { method: "POST", body: fd });
-        const ud = await up.json();
-        if (!up.ok) throw new Error(ud.error || "Proof upload failed");
-        proofPath = ud.path;
-      }
+      const fd = new FormData();
+      fd.append("file", proof);
+      const uploadResponse = await fetch("/api/upload-proof", { method: "POST", body: fd });
+      const uploadData = await uploadResponse.json();
+      if (!uploadResponse.ok) throw new Error(uploadData.error || "Proof upload failed");
 
       const r = await fetch("/api/bookings", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          customer,
-          proofPath,
+          customer: {
+            name: customer.name.trim(),
+            mobile: normalizeMobile(customer.mobile),
+            email: customer.email.trim()
+          },
+          proofPath: uploadData.path,
           schedules: schedules.map(s => ({ date: s.date, courtId: s.courtId, startMinutes: s.selected }))
         })
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Booking failed");
 
-      setMessage(`Booking submitted. Reference: ${d.bookingCode}. Total: ₱${d.totalAmount.toLocaleString()}`);
+      setMessage(`Booking submitted. Reference: ${d.bookingCode}. Total: ₱${d.totalAmount.toLocaleString()}. Payment is pending verification.`);
       setSchedules([emptySchedule()]);
       setProof(null);
+      setCustomer({ name: "", mobile: "", email: "" });
     } catch (e: any) {
       setMessage(e.message || "Something went wrong.");
     } finally {
@@ -139,12 +167,73 @@ export default function BookingApp() {
   return (
     <div className="grid" style={{ paddingBottom: 60 }}>
       <section className="card">
+        <span className="pill">CUSTOMER INFORMATION</span>
         <h2>Customer details</h2>
         <div className="grid grid-2">
-          <div><label>Full name</label><input value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} /></div>
-          <div><label>Mobile number</label><input value={customer.mobile} onChange={e => setCustomer({ ...customer, mobile: e.target.value })} /></div>
-          <div><label>Email address</label><input value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} /></div>
-          <div><label>Proof of MAYA payment</label><input type="file" accept="image/*" onChange={e => setProof(e.target.files?.[0] || null)} /></div>
+          <div>
+            <label>Full name *</label>
+            <input
+              value={customer.name}
+              maxLength={80}
+              autoComplete="name"
+              placeholder="Juan Dela Cruz"
+              onChange={e => setCustomer({ ...customer, name: e.target.value })}
+              aria-invalid={customer.name.length > 0 && !validName(customer.name)}
+            />
+            {customer.name.length > 0 && !validName(customer.name) && <div className="field-error">Enter a valid full name.</div>}
+          </div>
+          <div>
+            <label>Mobile number *</label>
+            <input
+              type="tel"
+              value={customer.mobile}
+              maxLength={16}
+              autoComplete="tel"
+              placeholder="09171234567"
+              onChange={e => setCustomer({ ...customer, mobile: e.target.value })}
+              aria-invalid={customer.mobile.length > 0 && !validPhilippineMobile(customer.mobile)}
+            />
+            <div className="field-help">Accepted: 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX.</div>
+            {customer.mobile.length > 0 && !validPhilippineMobile(customer.mobile) && <div className="field-error">Enter a valid Philippine mobile number.</div>}
+          </div>
+          <div>
+            <label>Email address <span className="muted">(optional)</span></label>
+            <input
+              type="text"
+              value={customer.email}
+              maxLength={120}
+              placeholder="Leave blank if not needed"
+              onChange={e => setCustomer({ ...customer, email: e.target.value })}
+            />
+            <div className="field-help">Email is optional and may be left blank.</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="card payment-card">
+        <div className="row space" style={{ alignItems: "flex-start" }}>
+          <div>
+            <span className="pill">MAYA PAYMENT</span>
+            <h2>Scan to Pay</h2>
+            <p className="muted">Scan this QR using MAYA or a supported InstaPay banking app, then pay the exact booking total.</p>
+            <div className="payment-name">DEBIE MAE UNOS</div>
+            <div className="payment-phone">+63 *** *** 7722</div>
+            <div className="payment-total">Amount to pay: <strong>₱{total.toLocaleString()}</strong></div>
+          </div>
+          <div className="qr-wrap" aria-label="MAYA InstaPay payment QR code">
+            <QRCodeSVG value={MAYA_QR_PAYLOAD} size={250} level="M" bgColor="#ffffff" fgColor="#000000" includeMargin />
+          </div>
+        </div>
+        <div className="payment-note">After payment, take a screenshot of the successful transaction and attach it below.</div>
+        <div style={{ marginTop: 18 }}>
+          <label>Proof of MAYA payment * <span className="muted">(JPG, PNG or WEBP · max 5 MB)</span></label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            required
+            onChange={e => setProof(e.target.files?.[0] || null)}
+          />
+          {proof && <div className="success" style={{ marginTop: 8 }}>✓ Attached: {proof.name}</div>}
         </div>
       </section>
 
@@ -215,20 +304,20 @@ export default function BookingApp() {
               <label>Available time slots</label>
               <div className="slot-grid">
                 {TIME_SLOTS.map(slot => {
-                  const u = s.unavailable.includes(slot.startMinute);
-                  const sel = s.selected.includes(slot.startMinute);
+                  const unavailable = s.unavailable.includes(slot.startMinute);
+                  const selected = s.selected.includes(slot.startMinute);
                   return (
                     <div
                       key={slot.startMinute}
-                      className={`slot ${sel ? "selected" : ""} ${u ? "unavailable" : ""}`}
+                      className={`slot ${selected ? "selected" : ""} ${unavailable ? "unavailable" : ""}`}
                       onClick={() => {
-                        if (u) return;
+                        if (unavailable) return;
                         patch(s.id, {
-                          selected: sel ? s.selected.filter(x => x !== slot.startMinute) : [...s.selected, slot.startMinute]
+                          selected: selected ? s.selected.filter(x => x !== slot.startMinute) : [...s.selected, slot.startMinute]
                         });
                       }}
                     >
-                      {slot.label}{u ? " · BOOKED" : ""}
+                      {slot.label}{unavailable ? " · BOOKED" : ""}
                     </div>
                   );
                 })}
