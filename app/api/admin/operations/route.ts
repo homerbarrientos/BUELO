@@ -11,10 +11,7 @@ async function addEvent(s: ReturnType<typeof getServerSupabase>, bookingId: stri
 }
 
 async function recalcBooking(s: ReturnType<typeof getServerSupabase>, bookingId: string) {
-  const { data: slots, error } = await s
-    .from("booking_slots")
-    .select("hourly_rate,status")
-    .eq("booking_id", bookingId);
+  const { data: slots, error } = await s.from("booking_slots").select("hourly_rate,status").eq("booking_id", bookingId);
   if (error) throw error;
   const active = (slots || []).filter(x => x.status !== "cancelled");
   const total = active.reduce((sum, x) => sum + Number(x.hourly_rate || 0), 0);
@@ -115,18 +112,53 @@ export async function POST(req: NextRequest) {
       const bookingDate = String(body.bookingDate || "");
       const courtId = String(body.courtId || "");
       const startMinute = Number(body.startMinute);
-      if (!slotId || !bookingDate || !courtId || !Number.isInteger(startMinute) || startMinute < 0 || startMinute > 1439) return NextResponse.json({ error: "Invalid reschedule details" }, { status: 400 });
-      const { data: oldSlot, error: oldError } = await s.from("booking_slots").select("id,booking_date,start_minute,end_minute,court_id,status,courts(name)").eq("id", slotId).eq("booking_id", bookingId).single();
+      if (!slotId || !/^\d{4}-\d{2}-\d{2}$/.test(bookingDate) || !courtId || !Number.isInteger(startMinute) || startMinute < 0 || startMinute > 1439) {
+        return NextResponse.json({ error: "Invalid reschedule details" }, { status: 400 });
+      }
+
+      const { data: oldSlot, error: oldError } = await s.from("booking_slots")
+        .select("id,booking_date,start_minute,end_minute,court_id,status,courts(name)")
+        .eq("id", slotId).eq("booking_id", bookingId).single();
       if (oldError) throw oldError;
-      const { data: court, error: courtError } = await s.from("courts").select("id,name,hourly_rate").eq("id", courtId).single();
+      if (!oldSlot || oldSlot.status === "cancelled") return NextResponse.json({ error: "Cancelled slots cannot be rescheduled." }, { status: 400 });
+
+      const { data: court, error: courtError } = await s.from("courts").select("id,name,hourly_rate,is_active").eq("id", courtId).single();
       if (courtError) throw courtError;
-      const { error: updateError } = await s.from("booking_slots").update({ booking_date: bookingDate, court_id: courtId, start_minute: startMinute, end_minute: (startMinute + 60) % 1440, hourly_rate: Number(court.hourly_rate) }).eq("id", slotId).eq("booking_id", bookingId);
+      if (!court?.is_active) return NextResponse.json({ error: "Selected court is inactive." }, { status: 400 });
+
+      const { data: conflictRows, error: conflictError } = await s.from("booking_slots")
+        .select("id")
+        .eq("booking_date", bookingDate)
+        .eq("court_id", courtId)
+        .eq("start_minute", startMinute)
+        .eq("status", "confirmed")
+        .neq("id", slotId)
+        .limit(1);
+      if (conflictError) throw conflictError;
+      if ((conflictRows || []).length > 0) {
+        return NextResponse.json({ error: "That court/time is already booked. Choose another date, court, or time." }, { status: 409 });
+      }
+
+      // A single UPDATE moves the confirmed slot. PostgreSQL removes the old unique-key
+      // value and inserts the new one atomically: old schedule becomes free, new one locks.
+      const { error: updateError } = await s.from("booking_slots").update({
+        booking_date: bookingDate,
+        court_id: courtId,
+        start_minute: startMinute,
+        end_minute: (startMinute + 60) % 1440,
+        hourly_rate: Number(court.hourly_rate),
+        status: "confirmed"
+      }).eq("id", slotId).eq("booking_id", bookingId);
       if (updateError) {
-        if (updateError.code === "23505") return NextResponse.json({ error: "That court/time is already confirmed for another booking." }, { status: 409 });
+        if (updateError.code === "23505") return NextResponse.json({ error: "That court/time was just booked by someone else. Please choose another slot." }, { status: 409 });
         throw updateError;
       }
+
       await recalcBooking(s, bookingId);
-      await addEvent(s, bookingId, "slot_rescheduled", { from: oldSlot, to: { bookingDate, courtId, courtName: court.name, startMinute } });
+      await addEvent(s, bookingId, "slot_rescheduled", {
+        from: oldSlot,
+        to: { bookingDate, courtId, courtName: court.name, startMinute }
+      });
     } else {
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }
