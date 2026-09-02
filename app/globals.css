@@ -998,3 +998,146 @@ input[type="date"]:hover{
     border-top:0
   }
 }
+
+
+/* Monthly sales line chart */
+.monthly-sales-card{
+  min-height:560px
+}
+
+.legend-line{
+  width:38px;
+  height:4px;
+  display:inline-block;
+  border-radius:99px
+}
+
+.selected-line-key{
+  background:#20d9e5;
+  box-shadow:0 0 10px rgba(32,217,229,.55)
+}
+
+.previous-line-key{
+  height:0;
+  border-top:3px dashed #9b68f2
+}
+
+.monthly-insights{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:20px
+}
+
+.monthly-insights span{
+  padding:9px 12px;
+  border:1px solid #376cae;
+  border-radius:10px;
+  color:#cfe2fb;
+  background:#0c2448;
+  font-size:13px
+}
+
+.monthly-chart-wrap{
+  position:relative;
+  width:100%;
+  margin-top:28px;
+  padding:0 4px 30px
+}
+
+.monthly-line-chart{
+  width:100%;
+  min-width:820px;
+  height:330px;
+  display:block;
+  overflow:visible
+}
+
+.monthly-grid-line{
+  stroke:rgba(117,157,207,.34);
+  stroke-width:1;
+  stroke-dasharray:5 5
+}
+
+.monthly-line{
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke
+}
+
+.selected-month-line{
+  stroke:#20d9e5;
+  stroke-width:4;
+  filter:drop-shadow(0 0 5px rgba(32,217,229,.55))
+}
+
+.previous-month-line{
+  stroke:#9b68f2;
+  stroke-width:3;
+  stroke-dasharray:10 9;
+  opacity:.92
+}
+
+.monthly-point{
+  vector-effect:non-scaling-stroke
+}
+
+.selected-point{
+  fill:#f2ffff;
+  stroke:#20d9e5;
+  stroke-width:2
+}
+
+.previous-point{
+  fill:#b88cff;
+  stroke:#7041c8;
+  stroke-width:1.5
+}
+
+.monthly-axis-labels{
+  position:absolute;
+  left:2.4%;
+  right:2.4%;
+  bottom:2px;
+  height:24px;
+  min-width:780px
+}
+
+.monthly-axis-labels span{
+  position:absolute;
+  transform:translateX(-50%);
+  color:#b8cdec;
+  font-size:12px;
+  white-space:nowrap
+}
+
+.monthly-chart-wrap{
+  overflow-x:auto
+}
+
+@media(max-width:900px){
+  .monthly-sales-card{
+    min-height:0
+  }
+
+  .monthly-line-chart{
+    height:300px
+  }
+}
+
+@media(max-width:600px){
+  .monthly-insights{
+    display:grid;
+    grid-template-columns:1fr
+  }
+
+  .monthly-line-chart{
+    min-width:760px;
+    height:280px
+  }
+
+  .monthly-axis-labels{
+    min-width:720px
+  }
+}
