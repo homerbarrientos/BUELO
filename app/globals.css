@@ -403,3 +403,47 @@ input[type="date"]:hover{
   }
 }
 
+
+
+/* Reservations operations filters */
+.operations-filter-grid{
+  display:grid;
+  grid-template-columns:minmax(260px,1.4fr) minmax(180px,.8fr) repeat(2,minmax(170px,.75fr));
+  gap:12px;
+  align-items:end
+}
+
+.operations-filter-actions{
+  grid-column:1/-1;
+  justify-content:flex-end
+}
+
+@media(max-width:900px){
+  .operations-filter-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+
+  .operations-search{
+    grid-column:1/-1
+  }
+}
+
+@media(max-width:520px){
+  .operations-filter-grid{
+    grid-template-columns:1fr
+  }
+
+  .operations-search,
+  .operations-filter-actions{
+    grid-column:auto
+  }
+
+  .operations-filter-actions{
+    display:grid;
+    grid-template-columns:1fr
+  }
+
+  .operations-filter-actions .btn{
+    width:100%
+  }
+}
