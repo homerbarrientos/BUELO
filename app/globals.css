@@ -452,9 +452,11 @@ input[type="date"]:hover{
 /* Booking schedule table */
 .schedule-table-wrap{
   margin-top:14px;
-  overflow-x:auto;
+  max-height:min(65vh,640px);
+  overflow:auto;
   border-radius:14px;
-  border:1px solid #4177b9
+  border:1px solid #4177b9;
+  scrollbar-gutter:stable
 }
 
 .schedule-table{
@@ -475,10 +477,14 @@ input[type="date"]:hover{
 }
 
 .schedule-table th{
+  position:sticky;
+  top:0;
+  z-index:2;
   background:#102d57;
   color:#f3f8ff;
   font-size:14px;
-  white-space:nowrap
+  white-space:nowrap;
+  box-shadow:0 2px 0 #4177b9
 }
 
 .schedule-table tbody tr:hover{
@@ -513,4 +519,26 @@ input[type="date"]:hover{
 .schedule-table td:nth-child(4),
 .schedule-table td:nth-child(5){
   overflow-wrap:anywhere
+}
+
+
+/* Shared scroll behavior for present and future BUELO data tables */
+.table-scroll{
+  max-height:min(65vh,640px);
+  overflow:auto;
+  scrollbar-gutter:stable;
+  border:1px solid #4177b9;
+  border-radius:14px
+}
+
+.table-scroll table{
+  width:100%;
+  border-collapse:collapse
+}
+
+.table-scroll thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#102d57
 }
