@@ -617,3 +617,142 @@ input[type="date"]:hover{
     grid-template-columns:1fr
   }
 }
+
+
+/* Open-slots printable report popup */
+.open-slots-kpi{
+  width:100%;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer
+}
+
+.open-slots-kpi:hover{
+  border-color:#69adff;
+  transform:translateY(-2px);
+  box-shadow:0 18px 40px rgba(45,127,249,.24)
+}
+
+.open-slots-overlay{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:rgba(2,8,20,.78);
+  backdrop-filter:blur(5px)
+}
+
+.open-slots-modal{
+  width:min(920px,100%);
+  max-height:90vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  padding:22px;
+  border:1px solid #4b86d2;
+  border-radius:18px;
+  background:linear-gradient(180deg,#102d57,#07182f);
+  box-shadow:0 24px 70px rgba(0,0,0,.5)
+}
+
+.open-slots-modal .availability-report{
+  max-height:none;
+  flex:1;
+  margin-top:16px
+}
+
+.open-slots-report-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 12px
+}
+
+.open-slots-report-court{
+  padding-bottom:12px
+}
+
+@media(max-width:600px){
+  .open-slots-overlay{
+    padding:10px
+  }
+
+  .open-slots-modal{
+    max-height:94vh;
+    padding:16px
+  }
+
+  .open-slots-report-actions{
+    align-items:flex-start
+  }
+
+  .open-slots-report-summary{
+    align-items:flex-start;
+    flex-direction:column
+  }
+}
+
+@media print{
+  body *{
+    visibility:hidden!important
+  }
+
+  .open-slots-overlay,
+  .open-slots-overlay *{
+    visibility:visible!important
+  }
+
+  .open-slots-overlay{
+    position:absolute;
+    inset:0;
+    display:block;
+    padding:0;
+    background:#fff
+  }
+
+  .open-slots-modal{
+    width:100%;
+    max-height:none;
+    overflow:visible;
+    padding:18px;
+    border:0;
+    border-radius:0;
+    background:#fff;
+    color:#111;
+    box-shadow:none
+  }
+
+  .open-slots-modal .muted{
+    color:#444
+  }
+
+  .open-slots-report-actions .row,
+  .open-slots-report-actions .pill{
+    display:none!important
+  }
+
+  .open-slots-modal .availability-report{
+    overflow:visible
+  }
+
+  .open-slots-modal .availability-day{
+    break-inside:avoid;
+    border-color:#aaa
+  }
+
+  .open-slots-modal .availability-court{
+    break-inside:avoid;
+    background:#fff;
+    border-color:#777
+  }
+
+  .open-slots-modal .availability-slot{
+    background:#fff;
+    color:#111;
+    border-color:#999
+  }
+}
