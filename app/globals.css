@@ -542,3 +542,78 @@ input[type="date"]:hover{
   z-index:2;
   background:#102d57
 }
+
+
+/* Detailed court availability report */
+.availability-report{
+  max-height:360px;
+  overflow:auto;
+  padding-right:4px;
+  scrollbar-gutter:stable
+}
+
+.availability-day{
+  padding:12px 0;
+  border-bottom:1px solid #315f9f
+}
+
+.availability-day:last-child{
+  border-bottom:0
+}
+
+.availability-date{
+  display:block;
+  margin-bottom:8px;
+  font-size:16px
+}
+
+.availability-court{
+  margin-top:8px;
+  border:1px solid #315f9f;
+  border-radius:12px;
+  background:#0a1d39;
+  overflow:hidden
+}
+
+.availability-court summary{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  padding:11px 12px;
+  cursor:pointer;
+  color:#dcecff
+}
+
+.availability-court summary:hover{
+  background:#10294e
+}
+
+.availability-slots{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  padding:0 12px 12px
+}
+
+.availability-slot{
+  padding:8px 10px;
+  border:1px solid #3d78c0;
+  border-radius:9px;
+  background:#123666;
+  color:#e8f3ff;
+  font-size:12px;
+  text-align:center;
+  white-space:nowrap
+}
+
+@media(max-width:520px){
+  .availability-court summary{
+    align-items:flex-start;
+    flex-direction:column
+  }
+
+  .availability-slots{
+    grid-template-columns:1fr
+  }
+}
