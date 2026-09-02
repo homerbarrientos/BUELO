@@ -756,3 +756,245 @@ input[type="date"]:hover{
     border-color:#999
   }
 }
+
+
+/* Full-width sales comparison chart */
+.sales-comparison-card{
+  margin-top:16px;
+  padding:26px;
+  overflow:hidden
+}
+
+.sales-comparison-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:28px
+}
+
+.sales-comparison-header h2{
+  margin:14px 0 12px;
+  font-size:28px
+}
+
+.sales-chart-legend{
+  display:flex;
+  gap:22px;
+  flex-wrap:wrap;
+  color:#c5d9f5
+}
+
+.sales-chart-legend span{
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+
+.legend-dot{
+  width:14px;
+  height:14px;
+  border-radius:4px;
+  display:inline-block
+}
+
+.selected-dot{
+  background:linear-gradient(180deg,#20d9d0,#3194ff)
+}
+
+.previous-dot{
+  background:linear-gradient(180deg,#a265ff,#6741d9)
+}
+
+.sales-comparison-totals{
+  display:grid;
+  grid-template-columns:repeat(3,max-content);
+  align-items:center;
+  gap:0
+}
+
+.sales-comparison-totals>div{
+  min-height:76px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:0 24px;
+  border-left:1px solid #4773aa
+}
+
+.sales-comparison-totals>div:first-child{
+  border-left:0
+}
+
+.sales-comparison-totals strong{
+  font-size:25px
+}
+
+.sales-comparison-totals span{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:12px
+}
+
+.selected-total{
+  color:#20d9e5
+}
+
+.previous-total{
+  color:#a77aff
+}
+
+.sales-change strong{
+  display:inline-flex;
+  align-self:flex-start;
+  padding:9px 14px;
+  border-radius:10px;
+  font-size:18px
+}
+
+.sales-change.positive strong{
+  color:#d5ffe3;
+  background:#0e633d;
+  border:1px solid #22a765
+}
+
+.sales-change.negative strong{
+  color:#ffd6dc;
+  background:#6b2632;
+  border:1px solid #b84a5c
+}
+
+.sales-chart-scroll{
+  width:100%;
+  margin-top:28px;
+  overflow-x:auto;
+  padding-bottom:6px
+}
+
+.sales-comparison-chart{
+  position:relative;
+  min-width:840px;
+  height:330px;
+  display:grid;
+  grid-template-columns:repeat(7,minmax(95px,1fr));
+  align-items:end;
+  gap:18px;
+  padding:24px 20px 0;
+  border-left:1px solid #5b83b6;
+  border-bottom:1px solid #5b83b6
+}
+
+.sales-grid-lines{
+  position:absolute;
+  inset:24px 0 0;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  pointer-events:none
+}
+
+.sales-grid-lines span{
+  display:block;
+  border-top:1px dashed rgba(117,157,207,.32)
+}
+
+.sales-day-group{
+  position:relative;
+  z-index:1;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:center
+}
+
+.sales-bars{
+  width:100%;
+  height:260px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:8px
+}
+
+.sales-bar-wrap{
+  width:min(42%,54px);
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end
+}
+
+.sales-bar-wrap>span{
+  margin-bottom:6px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap
+}
+
+.sales-bar{
+  width:100%;
+  min-height:3px;
+  border-radius:9px 9px 2px 2px;
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+  transition:filter .15s ease,transform .15s ease
+}
+
+.sales-bar:hover{
+  filter:brightness(1.15);
+  transform:translateY(-2px)
+}
+
+.selected-bar{
+  background:linear-gradient(180deg,#20d9d0,#3194ff)
+}
+
+.previous-bar{
+  background:linear-gradient(180deg,#a265ff,#6741d9)
+}
+
+.sales-day-label{
+  margin:12px 0 10px;
+  font-size:13px
+}
+
+@media(max-width:900px){
+  .sales-comparison-header{
+    flex-direction:column
+  }
+
+  .sales-comparison-totals{
+    width:100%;
+    grid-template-columns:repeat(3,minmax(0,1fr))
+  }
+
+  .sales-comparison-totals>div{
+    padding:0 14px
+  }
+}
+
+@media(max-width:600px){
+  .sales-comparison-card{
+    padding:18px
+  }
+
+  .sales-comparison-header h2{
+    font-size:23px
+  }
+
+  .sales-comparison-totals{
+    grid-template-columns:1fr
+  }
+
+  .sales-comparison-totals>div,
+  .sales-comparison-totals>div:first-child{
+    min-height:auto;
+    padding:12px 0;
+    border-left:0;
+    border-top:1px solid #4773aa
+  }
+
+  .sales-comparison-totals>div:first-child{
+    border-top:0
+  }
+}
