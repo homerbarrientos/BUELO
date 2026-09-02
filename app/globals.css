@@ -363,3 +363,43 @@ input[type="date"]:hover{
     height:auto
   }
 }
+
+/* Balanced dashboard KPI cards */
+.metric-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  margin-top:16px
+}
+
+.metric-grid>.card{
+  min-width:0;
+  min-height:150px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:hidden
+}
+
+.metric-grid .price{
+  max-width:100%;
+  font-size:clamp(28px,3.2vw,38px);
+  line-height:1.05;
+  white-space:nowrap;
+  letter-spacing:-.02em
+}
+
+@media(max-width:800px){
+  .metric-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+
+@media(max-width:520px){
+  .metric-grid{
+    grid-template-columns:1fr
+  }
+
+  .metric-grid>.card{
+    min-height:130px
+  }
+}
+
