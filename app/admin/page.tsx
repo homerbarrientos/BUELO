@@ -56,12 +56,14 @@ export default function AdminPage() {
   const monthlySalesChange=previousMonthSales?((selectedMonthSales-previousMonthSales)/previousMonthSales)*100:null;
   const monthlyBestDay=Math.max(0,...selectedMonthSeries.map(day=>day.sales));
   const monthlyDailyAverage=selectedMonthDays?selectedMonthSales/selectedMonthDays:0;
-  const maxMonthlySales=Math.max(1,...selectedMonthSeries.map(day=>day.sales),...previousMonthSeries.map(day=>day.sales));
-  const linePoint=(sales:number,index:number,count:number)=>({x:24+(index/Math.max(1,count-1))*952,y:270-(sales/maxMonthlySales)*225});
+  const rawMonthlyMax=Math.max(1,...selectedMonthSeries.map(day=>day.sales),...previousMonthSeries.map(day=>day.sales));
+  const monthlyYAxisMax=Math.max(1000,Math.ceil(rawMonthlyMax/1000)*1000);
+  const linePoint=(sales:number,index:number,count:number)=>({x:78+(index/Math.max(1,count-1))*900,y:270-(sales/monthlyYAxisMax)*225});
   const selectedLinePoints=selectedMonthSeries.map((day,index)=>{const p=linePoint(day.sales,index,selectedMonthSeries.length);return `${p.x},${p.y}`;}).join(" ");
   const previousLinePoints=previousMonthSeries.map((day,index)=>{const p=linePoint(day.sales,index,previousMonthSeries.length);return `${p.x},${p.y}`;}).join(" ");
-  const selectedAreaPoints=`24,270 ${selectedLinePoints} 976,270`;
+  const selectedAreaPoints=`78,270 ${selectedLinePoints} 978,270`;
   const monthlyAxisTicks=Array.from(new Set([0,4,9,14,19,24,selectedMonthSeries.length-1])).filter(index=>index>=0&&index<selectedMonthSeries.length);
+  const monthlyYTicks=Array.from({length:5},(_,index)=>({y:45+(index*225)/4,value:monthlyYAxisMax*(4-index)/4}));
   const availabilityByCourt=useMemo(()=>{ const activeCourts=courts.filter(c=>c.is_active); return dateSeries.map(day=>({date:day.date,courts:activeCourts.map(court=>{const rows=scheduleRows.filter(r=>r.slot.booking_date===day.date&&r.bookingStatus!=="cancelled"&&(r.slot.courts?.name||"")===court.name);const bookedStarts=new Set(rows.map(r=>r.slot.start_minute));const openSlots=TIME_SLOTS.filter(slot=>!bookedStarts.has(slot.startMinute));return {name:court.name,booked:rows.length,open:openSlots.length,openSlots,occupancy:(rows.length/TIME_SLOTS.length)*100};})})); },[dateSeries,courts,scheduleRows]);
 
   function exportCSV(){ const rows=[["Booking Date","Court","Time","Booking Reference","Customer","Mobile","Email","Booking Status","Payment Status","Rate"],...scheduleRows.map(r=>[r.slot.booking_date,r.slot.courts?.name||"Court",`${formatTime(r.slot.start_minute)} - ${formatTime(r.slot.end_minute)}`,r.bookingCode,r.customerName,r.customerMobile,r.customerEmail,r.bookingStatus,r.paymentStatus,Number(r.slot.hourly_rate||0).toFixed(2)])]; const csv=rows.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(",")).join("\n"); const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`booking-report-${fromDate}-to-${toDate}.csv`; a.click(); URL.revokeObjectURL(url); }
@@ -81,12 +83,13 @@ export default function AdminPage() {
         <div className="monthly-chart-wrap">
           <svg className="monthly-line-chart" viewBox="0 0 1000 310" role="img" aria-label={`Sales comparison for ${selectedMonthLabel} and ${previousMonthLabel}`}>
             <defs><linearGradient id="selectedSalesArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#20d9e5" stopOpacity=".38"/><stop offset="100%" stopColor="#20d9e5" stopOpacity=".02"/></linearGradient></defs>
-            {[45,101,157,213,270].map(y=><line key={y} x1="24" y1={y} x2="976" y2={y} className="monthly-grid-line"/>)}
+            {monthlyYTicks.map(tick=><g key={tick.y}><line x1="78" y1={tick.y} x2="978" y2={tick.y} className="monthly-grid-line"/><text x="68" y={tick.y+4} textAnchor="end" className="monthly-y-label">{php(tick.value)}</text></g>)}
             <polygon points={selectedAreaPoints} fill="url(#selectedSalesArea)"/>
             <polyline points={previousLinePoints} className="monthly-line previous-month-line"/>
             <polyline points={selectedLinePoints} className="monthly-line selected-month-line"/>
             {previousMonthSeries.map((day,index)=>{const p=linePoint(day.sales,index,previousMonthSeries.length);return <circle key={day.date} cx={p.x} cy={p.y} r="3" className="monthly-point previous-point"><title>{day.date}: {php(day.sales)}</title></circle>})}
             {selectedMonthSeries.map((day,index)=>{const p=linePoint(day.sales,index,selectedMonthSeries.length);return <circle key={day.date} cx={p.x} cy={p.y} r="3.5" className="monthly-point selected-point"><title>{day.date}: {php(day.sales)}</title></circle>})}
+            {monthlyAxisTicks.map(index=>{const day=selectedMonthSeries[index];const p=linePoint(day.sales,index,selectedMonthSeries.length);return <text key={`value-${day.date}`} x={p.x} y={Math.max(18,p.y-11)} textAnchor="middle" className="monthly-value-label">{php(day.sales)}</text>})}
           </svg>
           <div className="monthly-axis-labels">{monthlyAxisTicks.map(index=><span key={selectedMonthSeries[index].date} style={{left:`${(index/Math.max(1,selectedMonthSeries.length-1))*100}%`}}>{selectedMonthSeries[index].label}</span>)}</div>
         </div>
