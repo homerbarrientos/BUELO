@@ -32,7 +32,7 @@ export default function ManageReservations(){
   <section className="hero"><div className="logoBox">BUELO</div><div><span className="pill">OPERATIONS</span><h1>Reservations Control Center</h1><p>Verify payments, confirm bookings, reschedule court slots, process refunds, and review the audit trail.</p></div></section>
   <section className="card"><div className="grid grid-2"><div><label>Admin password</label><input type="password" value={code} onChange={e=>setCode(e.target.value)} /></div><div style={{display:"flex",alignItems:"end"}}><button className="btn btn-primary" disabled={!code||loading} onClick={load}>{loading?"Loading...":"Open Operations"}</button></div></div>{msg&&<p className={msg.includes("completed")?"success":"error"}>{msg}</p>}</section>
   {data.bookings.length>0&&<>
-   <div className="grid" style={{gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",marginTop:16}}>
+   <div className="grid metric-grid">
     <section className="card"><div className="muted">Pending Verification</div><div className="price">{pending}</div></section><section className="card"><div className="muted">Payment Verified</div><div className="price">{verified}</div></section><section className="card"><div className="muted">Confirmed</div><div className="price">{confirmed}</div></section><section className="card"><div className="muted">Open Refunds</div><div className="price">{refundOpen}</div></section><section className="card"><div className="muted">Paid Revenue</div><div className="price">{money(paidRevenue)}</div></section><section className="card"><div className="muted">Refunded</div><div className="price">{money(refunded)}</div></section>
    </div>
    <section className="card" style={{marginTop:16}}>
